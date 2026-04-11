@@ -12,9 +12,6 @@ export default function Home() {
   const [validadeSelecionada, setValidadeSelecionada] = useState("5 minutos")
   const [codigos, setCodigos] = useState<any[]>([])
 
-  const [caixas, setCaixas] = useState<any[]>([])
-  const [caixaSelecionada, setCaixaSelecionada] = useState<any>(null)
-
   function fazerLogin() {
     if (email === "admin@smartbox.com" && senha === "123456") {
       setLogado(true)
@@ -35,69 +32,37 @@ export default function Home() {
       : `${numero}${letra}#`
   }
 
-  function calcularExpiracao(validade) {
+  // ✅ CORRIGIDO (TypeScript)
+  function calcularExpiracao(validade: string) {
     const agora = new Date()
 
-    if (validade === "5 minutos") {
-      agora.setMinutes(agora.getMinutes() + 5)
-    } else if (validade === "30 minutos") {
-      agora.setMinutes(agora.getMinutes() + 30)
-    } else if (validade === "1 hora") {
-      agora.setHours(agora.getHours() + 1)
-    } else if (validade === "12 horas") {
-      agora.setHours(agora.getHours() + 12)
-    } else {
-      return null
-    }
+    if (validade === "5 minutos") agora.setMinutes(agora.getMinutes() + 5)
+    if (validade === "30 minutos") agora.setMinutes(agora.getMinutes() + 30)
+    if (validade === "1 hora") agora.setHours(agora.getHours() + 1)
+    if (validade === "12 horas") agora.setHours(agora.getHours() + 12)
+
+    if (validade === "Até usar") return null
 
     return agora.toISOString()
   }
 
-  function codigoExpirado(expira_em) {
-    if (!expira_em) return false
-
-    const agora = new Date()
-    const expira = new Date(expira_em)
-
-    return agora > expira
-  }
-
-  async function carregarCaixas() {
-    const { data, error } = await supabase
-      .from("caixas")
-      .select("*")
-
-    if (error) {
-      console.log("Erro ao buscar caixas:", error)
-    } else {
-      setCaixas(data || [])
-    }
-  }
-
   async function carregarCodigos() {
-    if (!caixaSelecionada) return
-
     const { data, error } = await supabase
       .from("test")
       .select("*")
       .eq("usado", false)
-      .eq("box_id", caixaSelecionada.box_id)
       .order("id", { ascending: false })
 
     if (error) {
-      console.log("Erro ao buscar códigos:", error)
+      console.log(error)
     } else {
       setCodigos(data || [])
     }
   }
 
   useEffect(() => {
-    if (logado) carregarCaixas()
+    if (logado) carregarCodigos()
   }, [logado])
-
-  useEffect(() => {
-    if (caixaSelecionada) carregarCodigos()
-  }, [caixaSelecionada])
 
   async function gerarNovoCodigo() {
     if (codigos.length >= 3) {
@@ -106,20 +71,19 @@ export default function Home() {
     }
 
     const novoCodigo = gerarCodigoAleatorio()
+    const expiracao = calcularExpiracao(validadeSelecionada)
 
     const { error } = await supabase.from("test").insert([
       {
         codigo: novoCodigo,
         validade: validadeSelecionada,
         usado: false,
-        status: "fechada",
-        box_id: caixaSelecionada.box_id,
-        expira_em: calcularExpiracao(validadeSelecionada),
+        expira_em: expiracao,
       },
     ])
 
     if (error) {
-      console.log("Erro ao salvar código:", error)
+      console.log(error)
       alert("Erro ao salvar código")
     } else {
       carregarCodigos()
@@ -132,35 +96,44 @@ export default function Home() {
       .update({ usado: true })
       .eq("id", id)
 
-    if (error) {
-      alert("Erro ao excluir código")
-    } else {
-      carregarCodigos()
-    }
+    if (!error) carregarCodigos()
   }
 
-  // LOGIN
+  function estaExpirado(codigo: any) {
+    if (!codigo.expira_em) return false
+    return new Date(codigo.expira_em) < new Date()
+  }
+
+  const ativos = codigos.filter((c) => !estaExpirado(c))
+  const expirados = codigos.filter((c) => estaExpirado(c))
+
   if (!logado) {
     return (
       <main className="min-h-screen flex items-center justify-center">
-        <div className="bg-white p-6 rounded-2xl shadow-xl">
-          <h1 className="text-xl font-bold mb-4">Login</h1>
+        <div className="bg-white p-6 rounded-xl shadow w-80">
+          <h1 className="text-xl font-bold mb-4 text-center">Smart Box</h1>
 
           <input
             placeholder="Email"
+            className="w-full mb-3 p-2 border rounded"
+            value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border p-2 mb-2 w-full"
           />
+
           <input
-            type="password"
             placeholder="Senha"
+            type="password"
+            className="w-full mb-3 p-2 border rounded"
+            value={senha}
             onChange={(e) => setSenha(e.target.value)}
-            className="border p-2 mb-2 w-full"
           />
 
-          {erro && <p className="text-red-500">{erro}</p>}
+          {erro && <p className="text-red-500 text-sm">{erro}</p>}
 
-          <button onClick={fazerLogin} className="bg-blue-500 text-white p-2 w-full">
+          <button
+            onClick={fazerLogin}
+            className="w-full bg-blue-500 text-white p-2 rounded"
+          >
             Entrar
           </button>
         </div>
@@ -168,83 +141,47 @@ export default function Home() {
     )
   }
 
-  // ESCOLHER CAIXA
-  if (!caixaSelecionada) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <div className="bg-white p-6 rounded-2xl shadow-xl">
-          <h2 className="text-xl font-bold mb-4">Escolha sua caixa</h2>
-
-          {caixas.length === 0 ? (
-            <p>Nenhuma caixa encontrada</p>
-          ) : (
-            caixas.map((caixa) => (
-              <button
-                key={caixa.id}
-                onClick={() => setCaixaSelecionada(caixa)}
-                className="block w-full mb-2 p-3 bg-blue-500 text-white rounded-lg"
-              >
-                {caixa.nome} ({caixa.box_id})
-              </button>
-            ))
-          )}
-        </div>
-      </main>
-    )
-  }
-
-  // PAINEL
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md">
-        <h1 className="text-xl font-bold mb-2">Painel</h1>
+    <main className="p-6 max-w-md mx-auto">
+      <h1 className="text-2xl font-bold mb-4 text-center">Smart Box</h1>
 
-        <p className="mb-2">Caixa: {caixaSelecionada.box_id}</p>
+      <select
+        value={validadeSelecionada}
+        onChange={(e) => setValidadeSelecionada(e.target.value)}
+        className="w-full mb-4 p-2 border rounded"
+      >
+        <option>5 minutos</option>
+        <option>30 minutos</option>
+        <option>1 hora</option>
+        <option>12 horas</option>
+        <option>Até usar</option>
+      </select>
 
-        <button
-          onClick={() => setCaixaSelecionada(null)}
-          className="text-blue-500 mb-4"
-        >
-          Trocar caixa
-        </button>
+      <button
+        onClick={gerarNovoCodigo}
+        className="w-full bg-green-500 text-white p-2 rounded mb-4"
+      >
+        Gerar Código
+      </button>
 
-        <select
-          value={validadeSelecionada}
-          onChange={(e) => setValidadeSelecionada(e.target.value)}
-          className="border p-2 mb-4 w-full"
-        >
-          <option>5 minutos</option>
-          <option>30 minutos</option>
-          <option>1 hora</option>
-          <option>12 horas</option>
-          <option>Até usar</option>
-        </select>
+      {/* ATIVOS */}
+      <h2 className="font-bold mb-2">Códigos Ativos</h2>
+      {ativos.map((c) => (
+        <div key={c.id} className="border p-2 mb-2 rounded">
+          <p className="font-bold">{c.codigo}</p>
+          <p style={{ color: "green" }}>Ativo</p>
+          <button onClick={() => excluirCodigo(c.id)}>Excluir</button>
+        </div>
+      ))}
 
-        <button
-          onClick={gerarNovoCodigo}
-          className="bg-green-500 text-white p-2 w-full mb-4"
-        >
-          Gerar código
-        </button>
-
-        {codigos.map((c) => {
-          const expirado = codigoExpirado(c.expira_em)
-
-          return (
-            <div key={c.id} className="border p-2 mb-2">
-              <p className="font-bold">{c.codigo}</p>
-
-              <p style={{ color: expirado ? "red" : "green" }}>
-                {expirado ? "Expirado" : "Ativo"}
-              </p>
-
-              <button onClick={() => excluirCodigo(c.id)}>
-                Excluir
-              </button>
-            </div>
-          )
-        })}
-      </div>
+      {/* EXPIRADOS */}
+      <h2 className="font-bold mt-4 mb-2">Expirados</h2>
+      {expirados.map((c) => (
+        <div key={c.id} className="border p-2 mb-2 rounded">
+          <p className="font-bold">{c.codigo}</p>
+          <p style={{ color: "red" }}>Expirado</p>
+        </div>
+      ))}
     </main>
   )
 }
