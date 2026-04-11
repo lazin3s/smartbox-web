@@ -65,7 +65,7 @@ export default function Home() {
   }, [logado])
 
   async function gerarNovoCodigo() {
-    if (codigos.length >= 3) {
+    if (ativos.length >= 3) {
       alert("Limite máximo de 3 códigos ativos atingido.")
       return
     }
