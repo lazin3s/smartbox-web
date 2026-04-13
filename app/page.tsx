@@ -8,19 +8,25 @@ export default function Home() {
   const [senha, setSenha] = useState("")
   const [logado, setLogado] = useState(false)
   const [erro, setErro] = useState("")
+  const [user, setUser] = useState<any>(null)
+  const [boxId, setBoxId] = useState("")
 
   const [validadeSelecionada, setValidadeSelecionada] = useState("5 minutos")
   const [codigos, setCodigos] = useState<any[]>([])
 
-  function fazerLogin() {
-    if (email === "admin@smartbox.com" && senha === "123456") {
-      setLogado(true)
-      setErro("")
-    } else {
-      setErro("E-mail ou senha inválidos")
-    }
-  }
+ async function fazerLogin() {
+  const { error } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: senha,
+  })
 
+  if (error) {
+    setErro("E-mail ou senha inválidos")
+  } else {
+    setLogado(true)
+    setErro("")
+  }
+}
   function gerarCodigoAleatorio() {
     const letras = ["A", "B", "C", "D"]
     const numero = Math.floor(100 + Math.random() * 900).toString()
@@ -51,6 +57,7 @@ export default function Home() {
       .from("test")
       .select("*")
       .eq("usado", false)
+      .eq("box_id", boxId)
       .order("id", { ascending: false })
 
     if (error) {
@@ -60,11 +67,42 @@ export default function Home() {
     }
   }
 
+  async function carregarCaixa() {
+  if (!user) return
+
+  const { data, error } = await supabase
+    .from("caixas")
+    .select("*")
+    .eq("user_id", user.id)
+    .single()
+
+  if (error) {
+    console.log("Erro ao buscar caixa:", error)
+  } else {
+    console.log("CAIXA:", data)
+    setBoxId(data.box_id)
+    }
+  }
+
   useEffect(() => {
-    if (logado) carregarCodigos()
-  }, [logado])
+    if (boxId) carregarCodigos()
+  }, [boxId])
+
+  useEffect(() => {
+  supabase.auth.getUser().then(({ data }) => {
+    setUser(data.user)
+    console.log("USER:", data.user)
+  })
+}, [])
+
+  useEffect(() => {
+  if (user) {
+    carregarCaixa()
+  }
+}, [user])
 
   async function gerarNovoCodigo() {
+    console.log("BOX ID NA HORA DE SALVAR:", boxId)
     if (ativos.length >= 3) {
       alert("Limite máximo de 3 códigos ativos atingido.")
       return
@@ -79,6 +117,7 @@ export default function Home() {
         validade: validadeSelecionada,
         usado: false,
         expira_em: expiracao,
+        box_id: boxId,
       },
     ])
 
