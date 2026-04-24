@@ -15,6 +15,19 @@ export default function Home() {
   const [codigos, setCodigos] = useState<any[]>([])
 
  async function fazerLogin() {
+  async function cadastrar() {
+  const { error } = await supabase.auth.signUp({
+    email: email,
+    password: senha,
+  })
+
+  if (error) {
+    setErro("Erro ao cadastrar")
+    console.log(error)
+  } else {
+    setErro("Cadastro realizado! Verifique seu email.")
+  }
+}
   const { error } = await supabase.auth.signInWithPassword({
     email: email,
     password: senha,
@@ -190,6 +203,13 @@ useEffect(() => {
             className="w-full bg-blue-500 text-white p-2 rounded"
           >
             Entrar
+          </button>
+
+          <button
+            onClick={cadastrar}
+            className="w-full bg-gray-500 text-white p-2 rounded mt-2"
+>
+          Criar conta
           </button>
         </div>
       </main>
