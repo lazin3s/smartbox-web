@@ -84,15 +84,31 @@ export default function Home() {
     }
   }
 
-  useEffect(() => {
-    if (boxId) carregarCodigos()
-  }, [boxId])
+ useEffect(() => {
+  const getSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
 
-  useEffect(() => {
-  supabase.auth.getUser().then(({ data }) => {
-    setUser(data.user)
-    console.log("USER:", data.user)
-  })
+    if (session) {
+      setUser(session.user)
+      setLogado(true)
+      console.log("Sessão restaurada:", session.user)
+    }
+  }
+
+  getSession()
+}, [])
+
+useEffect(() => {
+  const { data: listener } = supabase.auth.onAuthStateChange(
+    (_event, session) => {
+      setUser(session?.user ?? null)
+      setLogado(!!session)
+    }
+  )
+
+  return () => {
+    listener.subscription.unsubscribe()
+  }
 }, [])
 
   useEffect(() => {
