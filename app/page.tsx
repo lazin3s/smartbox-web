@@ -14,32 +14,36 @@ export default function Home() {
   const [validadeSelecionada, setValidadeSelecionada] = useState("5 minutos")
   const [codigos, setCodigos] = useState<any[]>([])
 
- async function fazerLogin() {
+  // ✅ CADASTRO (CORRIGIDO)
   async function cadastrar() {
-  const { error } = await supabase.auth.signUp({
-    email: email,
-    password: senha,
-  })
+    const { error } = await supabase.auth.signUp({
+      email: email,
+      password: senha,
+    })
 
-  if (error) {
-    setErro("Erro ao cadastrar")
-    console.log(error)
-  } else {
-    setErro("Cadastro realizado! Verifique seu email.")
+    if (error) {
+      setErro("Erro ao cadastrar")
+      console.log(error)
+    } else {
+      setErro("Cadastro realizado! Verifique seu email.")
+    }
   }
-}
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email,
-    password: senha,
-  })
 
-  if (error) {
-    setErro("E-mail ou senha inválidos")
-  } else {
-    setLogado(true)
-    setErro("")
+  // ✅ LOGIN
+  async function fazerLogin() {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: senha,
+    })
+
+    if (error) {
+      setErro("E-mail ou senha inválidos")
+    } else {
+      setLogado(true)
+      setErro("")
+    }
   }
-}
+
   function gerarCodigoAleatorio() {
     const letras = ["A", "B", "C", "D"]
     const numero = Math.floor(100 + Math.random() * 900).toString()
@@ -51,7 +55,6 @@ export default function Home() {
       : `${numero}${letra}#`
   }
 
-  // ✅ CORRIGIDO (TypeScript)
   function calcularExpiracao(validade: string) {
     const agora = new Date()
 
@@ -81,57 +84,58 @@ export default function Home() {
   }
 
   async function carregarCaixa() {
-  if (!user) return
+    if (!user) return
 
-  const { data, error } = await supabase
-    .from("caixas")
-    .select("*")
-    .eq("user_id", user.id)
-    .single()
+    const { data, error } = await supabase
+      .from("caixas")
+      .select("*")
+      .eq("user_id", user.id)
+      .single()
 
-  if (error) {
-    console.log("Erro ao buscar caixa:", error)
-  } else {
-    console.log("CAIXA:", data)
-    setBoxId(data.box_id)
+    if (error) {
+      console.log("Erro ao buscar caixa:", error)
+    } else {
+      setBoxId(data.box_id)
     }
   }
-
- useEffect(() => {
-  const getSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
-
-    if (session) {
-      setUser(session.user)
-      setLogado(true)
-      console.log("Sessão restaurada:", session.user)
-    }
-  }
-
-  getSession()
-}, [])
-
-useEffect(() => {
-  const { data: listener } = supabase.auth.onAuthStateChange(
-    (_event, session) => {
-      setUser(session?.user ?? null)
-      setLogado(!!session)
-    }
-  )
-
-  return () => {
-    listener.subscription.unsubscribe()
-  }
-}, [])
 
   useEffect(() => {
-  if (user) {
-    carregarCaixa()
-  }
-}, [user])
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (session) {
+        setUser(session.user)
+        setLogado(true)
+      }
+    }
+
+    getSession()
+  }, [])
+
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null)
+        setLogado(!!session)
+      }
+    )
+
+    return () => {
+      listener.subscription.unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    if (user) {
+      carregarCaixa()
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (boxId) carregarCodigos()
+  }, [boxId])
 
   async function gerarNovoCodigo() {
-    console.log("BOX ID NA HORA DE SALVAR:", boxId)
     if (ativos.length >= 3) {
       alert("Limite máximo de 3 códigos ativos atingido.")
       return
@@ -175,6 +179,7 @@ useEffect(() => {
   const ativos = codigos.filter((c) => !estaExpirado(c))
   const expirados = codigos.filter((c) => estaExpirado(c))
 
+  // 🔐 TELA LOGIN
   if (!logado) {
     return (
       <main className="min-h-screen flex items-center justify-center">
@@ -208,8 +213,8 @@ useEffect(() => {
           <button
             onClick={cadastrar}
             className="w-full bg-gray-500 text-white p-2 rounded mt-2"
->
-          Criar conta
+          >
+            Criar conta
           </button>
         </div>
       </main>
@@ -239,7 +244,6 @@ useEffect(() => {
         Gerar Código
       </button>
 
-      {/* ATIVOS */}
       <h2 className="font-bold mb-2">Códigos Ativos</h2>
       {ativos.map((c) => (
         <div key={c.id} className="border p-2 mb-2 rounded">
@@ -249,7 +253,6 @@ useEffect(() => {
         </div>
       ))}
 
-      {/* EXPIRADOS */}
       <h2 className="font-bold mt-4 mb-2">Expirados</h2>
       {expirados.map((c) => (
         <div key={c.id} className="border p-2 mb-2 rounded">
