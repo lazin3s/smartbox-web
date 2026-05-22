@@ -13,7 +13,9 @@ export default function Home() {
 
   const [modoCadastro, setModoCadastro] = useState(false)
 
-  const [validadeSelecionada, setValidadeSelecionada] = useState("5 minutos")
+  // ✅ EMPRESA
+  const [empresaSelecionada, setEmpresaSelecionada] = useState("Shopee")
+
   const [codigos, setCodigos] = useState<any[]>([])
 
   async function cadastrar() {
@@ -48,17 +50,10 @@ export default function Home() {
     const letras = ["A", "B", "C", "D"]
     const numero = Math.floor(100 + Math.random() * 900).toString()
     const letra = letras[Math.floor(Math.random() * letras.length)]
-    return Math.random() < 0.5 ? `${letra}${numero}#` : `${numero}${letra}#`
-  }
 
-  function calcularExpiracao(validade: string) {
-    const agora = new Date()
-    if (validade === "5 minutos") agora.setMinutes(agora.getMinutes() + 5)
-    if (validade === "30 minutos") agora.setMinutes(agora.getMinutes() + 30)
-    if (validade === "1 hora") agora.setHours(agora.getHours() + 1)
-    if (validade === "12 horas") agora.setHours(agora.getHours() + 12)
-    if (validade === "Até usar") return null
-    return agora.toISOString()
+    return Math.random() < 0.5
+      ? `${letra}${numero}#`
+      : `${numero}${letra}#`
   }
 
   async function carregarCodigos() {
@@ -100,6 +95,7 @@ export default function Home() {
         setLogado(!!session)
       }
     )
+
     return () => listener.subscription.unsubscribe()
   }, [])
 
@@ -112,20 +108,19 @@ export default function Home() {
   }, [boxId])
 
   async function gerarNovoCodigo() {
-    if (ativos.length >= 3) {
+
+    if (codigos.length >= 3) {
       alert("Limite máximo atingido")
       return
     }
 
     const novoCodigo = gerarCodigoAleatorio()
-    const expiracao = calcularExpiracao(validadeSelecionada)
 
     await supabase.from("test").insert([
       {
         codigo: novoCodigo,
-        validade: validadeSelecionada,
+        empresa: empresaSelecionada,
         usado: false,
-        expira_em: expiracao,
         box_id: boxId,
       },
     ])
@@ -134,23 +129,20 @@ export default function Home() {
   }
 
   async function excluirCodigo(id: number) {
-    await supabase.from("test").update({ usado: true }).eq("id", id)
+    await supabase
+      .from("test")
+      .update({ usado: true })
+      .eq("id", id)
+
     carregarCodigos()
   }
-
-  function estaExpirado(c: any) {
-    if (!c.expira_em) return false
-    return new Date(c.expira_em) < new Date()
-  }
-
-  const ativos = codigos.filter((c) => !estaExpirado(c))
-  const expirados = codigos.filter((c) => estaExpirado(c))
 
   // 🔐 LOGIN / CADASTRO
   if (!logado) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600">
         <div className="bg-white p-8 rounded-2xl shadow-xl w-80">
+
           <h1 className="text-2xl font-bold mb-6 text-center">
             {modoCadastro ? "Criar Conta" : "Login"}
           </h1>
@@ -170,7 +162,11 @@ export default function Home() {
             onChange={(e) => setSenha(e.target.value)}
           />
 
-          {erro && <p className="text-red-500 text-sm mb-3">{erro}</p>}
+          {erro && (
+            <p className="text-red-500 text-sm mb-3">
+              {erro}
+            </p>
+          )}
 
           {modoCadastro ? (
             <>
@@ -214,18 +210,22 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-lg">
-        <h1 className="text-2xl font-bold text-center mb-4">Smart Box</h1>
+
+        <h1 className="text-2xl font-bold text-center mb-4">
+          Smart Box
+        </h1>
 
         <select
-          value={validadeSelecionada}
-          onChange={(e) => setValidadeSelecionada(e.target.value)}
+          value={empresaSelecionada}
+          onChange={(e) => setEmpresaSelecionada(e.target.value)}
           className="w-full mb-4 p-3 border rounded-lg"
         >
-          <option>5 minutos</option>
-          <option>30 minutos</option>
-          <option>1 hora</option>
-          <option>12 horas</option>
-          <option>Até usar</option>
+          <option>Shopee</option>
+          <option>Mercado Livre</option>
+          <option>Amazon</option>
+          <option>iFood</option>
+          <option>99</option>
+          <option>Outros</option>
         </select>
 
         <button
@@ -235,23 +235,29 @@ export default function Home() {
           Gerar Código
         </button>
 
-        <h2 className="font-semibold mb-2">Ativos</h2>
-        {ativos.map((c) => (
-          <div key={c.id} className="bg-green-50 p-3 rounded-lg mb-2">
-            <p className="font-bold">{c.codigo}</p>
+        <h2 className="font-semibold mb-2">
+          Códigos Ativos
+        </h2>
+
+        {codigos.map((c) => (
+          <div
+            key={c.id}
+            className="bg-green-50 p-3 rounded-lg mb-2"
+          >
+            <p className="font-bold text-lg">
+              {c.codigo}
+            </p>
+
+            <p className="text-sm text-gray-600">
+              {c.empresa}
+            </p>
+
             <button
               onClick={() => excluirCodigo(c.id)}
-              className="text-red-500 text-sm"
+              className="text-red-500 text-sm mt-2"
             >
               Excluir
             </button>
-          </div>
-        ))}
-
-        <h2 className="font-semibold mt-4 mb-2">Expirados</h2>
-        {expirados.map((c) => (
-          <div key={c.id} className="bg-gray-200 p-3 rounded-lg mb-2">
-            <p className="font-bold">{c.codigo}</p>
           </div>
         ))}
       </div>
