@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "./supabase"
+import CodigoCard from "./components/CodigoCard"
 
 export default function Home() {
   const [email, setEmail] = useState("")
@@ -240,26 +241,12 @@ export default function Home() {
         </h2>
 
         {codigos.map((c) => (
-          <div
-            key={c.id}
-            className="bg-green-50 p-3 rounded-lg mb-2"
-          >
-            <p className="font-bold text-lg">
-              {c.codigo}
-            </p>
-
-            <p className="text-sm text-gray-600">
-              {c.empresa}
-            </p>
-
-            <button
-              onClick={() => excluirCodigo(c.id)}
-              className="text-red-500 text-sm mt-2"
-            >
-              Excluir
-            </button>
-          </div>
-        ))}
+  <CodigoCard
+    key={c.id}
+    codigo={c}
+    onExcluir={excluirCodigo}
+  />
+))}
       </div>
     </main>
   )
