@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "./supabase"
 import CodigoCard from "./components/CodigoCard"
 import LoginForm from "./components/LoginForm"
+import Dashboard from "./components/Dashboard"
 
 export default function Home() {
   const [email, setEmail] = useState("")
@@ -157,46 +158,13 @@ if (!logado) {
 }
 
   // 📦 APP
-  return (
-    <main className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-lg">
-
-        <h1 className="text-2xl font-bold text-center mb-4">
-          Smart Box
-        </h1>
-
-        <select
-          value={empresaSelecionada}
-          onChange={(e) => setEmpresaSelecionada(e.target.value)}
-          className="w-full mb-4 p-3 border rounded-lg"
-        >
-          <option>Shopee</option>
-          <option>Mercado Livre</option>
-          <option>Amazon</option>
-          <option>iFood</option>
-          <option>99</option>
-          <option>Outros</option>
-        </select>
-
-        <button
-          onClick={gerarNovoCodigo}
-          className="w-full bg-green-500 hover:bg-green-600 text-white p-3 rounded-lg mb-4"
-        >
-          Gerar Código
-        </button>
-
-        <h2 className="font-semibold mb-2">
-          Códigos Ativos
-        </h2>
-
-        {codigos.map((c) => (
-  <CodigoCard
-    key={c.id}
-    codigo={c}
-    onExcluir={excluirCodigo}
+return (
+  <Dashboard
+    empresaSelecionada={empresaSelecionada}
+    setEmpresaSelecionada={setEmpresaSelecionada}
+    gerarNovoCodigo={gerarNovoCodigo}
+    codigos={codigos}
+    excluirCodigo={excluirCodigo}
   />
-))}
-      </div>
-    </main>
-  )
+)
 }
