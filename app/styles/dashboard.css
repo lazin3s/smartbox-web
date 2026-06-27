@@ -203,12 +203,16 @@
     display:flex;
     justify-content:space-between;
     align-items:center;
+
+    min-height:60px;
 }
 
 .codigo-empresa{
     display:flex;
     align-items:center;
     gap:10px;
+
+    flex:1;
 
     font-weight:700;
     font-size:18px;
@@ -246,25 +250,31 @@
 }
 
 .codigo-excluir{
-    width:46px;
-    height:46px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+
+    padding:10px 16px;
 
     border:none;
 
-    border-radius:14px;
+    border-radius:12px;
 
-    background:#d62828;
+    background:#dc2626;
 
     color:white;
 
-    font-size:20px;
+    font-weight:700;
+
+    font-size:14px;
 
     cursor:pointer;
 
-    transition:0.25s;
+    transition:.25s;
 }
 
 .codigo-excluir:hover{
     background:#b91c1c;
-    transform:scale(1.08);
+    transform:translateY(-2px);
 }
