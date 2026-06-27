@@ -1,4 +1,5 @@
 "use client"
+
 type CodigoCardProps = {
   codigo: any
   onExcluir: (id: number) => void
@@ -8,22 +9,60 @@ export default function CodigoCard({
   codigo,
   onExcluir,
 }: CodigoCardProps) {
+
+  function getEmpresaIcon(nome: string) {
+    switch (nome) {
+      case "Shopee":
+        return "🟠"
+
+      case "Mercado Livre":
+        return "🟡"
+
+      case "Amazon":
+        return "🟦"
+
+      case "iFood":
+        return "🍔"
+
+      case "99":
+        return "🚕"
+
+      default:
+        return "📦"
+    }
+  }
+
   return (
-    <div className="bg-green-50 p-3 rounded-lg mb-2">
-      <p className="font-bold text-lg">
-        {codigo.codigo}
-      </p>
+    <div className="codigo-card">
 
-      <p className="text-sm text-gray-600">
-        {codigo.empresa}
-      </p>
+      <div className="codigo-topo">
 
-      <button
+        <div className="codigo-empresa">
+          <span className="empresa-icon">
+            {getEmpresaIcon(codigo.empresa)}
+          </span>
+
+          <span>
+            {codigo.empresa}
+          </span>
+        </div>
+
+        <button
+        className="codigo-excluir"
         onClick={() => onExcluir(codigo.id)}
-        className="text-red-500 text-sm mt-2"
       >
-        Excluir
+        🗑 Excluir
       </button>
+        </div>
+
+      <div className="codigo-principal">
+        {codigo.codigo}
+      </div>
+
+      <div className="codigo-status">
+        Código ativo
+      </div>
+
     </div>
   )
 }

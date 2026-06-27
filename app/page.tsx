@@ -112,7 +112,7 @@ export default function Home() {
 
   async function gerarNovoCodigo() {
 
-    if (codigos.length >= 3) {
+    if (codigos.length >= 4) {
       alert("Limite máximo atingido")
       return
     }
