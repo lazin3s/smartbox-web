@@ -10,42 +10,30 @@ export default function CodigoCard({
   onExcluir,
 }: CodigoCardProps) {
 
-  function getEmpresaIcon(nome: string) {
-    switch (nome) {
-      case "Shopee":
-        return "🟠"
-
-      case "Mercado Livre":
-        return "🟡"
-
-      case "Amazon":
-        return "🟦"
-
-      case "iFood":
-        return "🍔"
-
-      case "99":
-        return "🚕"
-
-      default:
-        return "📦"
-    }
-  }
+const logos: Record<string, string> = {
+  Shopee: "/logos/shopee.png",
+  "Mercado Livre": "/logos/mercado-livre.png",
+  Amazon: "/logos/amazon.png",
+  iFood: "/logos/ifood.png",
+  "99": "/logos/99.png",
+  AliExpress: "/logos/aliexpress.png",
+  Shein: "/logos/shein.png",
+}
 
   return (
     <div className="codigo-card">
 
       <div className="codigo-topo">
 
-        <div className="codigo-empresa">
-          <span className="empresa-icon">
-            {getEmpresaIcon(codigo.empresa)}
-          </span>
+       <div className="codigo-empresa">
 
-          <span>
-            {codigo.empresa}
-          </span>
-        </div>
+    <img
+        src={logos[codigo.empresa] || "/logos/caixa.png"}
+        alt={codigo.empresa}
+        className="empresa-logo"
+    />
+
+</div>
 
         <button
         className="codigo-excluir"

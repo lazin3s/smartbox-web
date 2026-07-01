@@ -18,6 +18,16 @@ export default function Dashboard({
   codigos,
   excluirCodigo,
 }: DashboardProps) {
+  const empresas = [
+  { nome: "Shopee", logo: "/logos/shopee.png" },
+  { nome: "Mercado Livre", logo: "/logos/mercado-livre.png" },
+  { nome: "Amazon", logo: "/logos/amazon.png" },
+  { nome: "iFood", logo: "/logos/ifood.png" },
+  { nome: "99", logo: "/logos/99.png" },
+  { nome: "AliExpress", logo: "/logos/aliexpress.png" },
+  { nome: "Shein", logo: "/logos/shein.png" },
+  { nome: "Outros", logo: "/logos/caixa.png" },
+]
   return (
     <main className="dashboard-container">
       <section className="dashboard-header">
@@ -40,18 +50,22 @@ export default function Dashboard({
             Selecione a empresa
           </label>
 
-          <select
-            value={empresaSelecionada}
-            onChange={(e) => setEmpresaSelecionada(e.target.value)}
-            className="dashboard-select"
-          >
-            <option>Shopee</option>
-            <option>Mercado Livre</option>
-            <option>Amazon</option>
-            <option>iFood</option>
-            <option>99</option>
-            <option>Outros</option>
-          </select>
+          <div className="empresa-grid">
+  {empresas.map((empresa) => (
+    <button
+      key={empresa.nome}
+      type="button"
+      onClick={() => setEmpresaSelecionada(empresa.nome)}
+      className={
+        empresaSelecionada === empresa.nome
+          ? "empresa-option empresa-option-active"
+          : "empresa-option"
+      }
+    >
+      <img src={empresa.logo} alt={empresa.nome} />
+    </button>
+  ))}
+</div>
 
           <button
             onClick={gerarNovoCodigo}
